@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 from datasets import load_dataset
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, TrainingArguments, Trainer, AutoTokenizer, AutoModelForCausalLM, AutoModelForQuestionAnswering
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, TrainingArguments, Trainer
 from peft import LoraConfig, get_peft_model
-import math
 import os
 
 import ray.train.huggingface.transformers
@@ -86,7 +85,7 @@ def train_func():
 
     trainer.train()
 
-# Use Minio for 
+# Use Minio for model checkpoint
 def get_minio_run_config():
     import s3fs
     import pyarrow.fs
@@ -110,7 +109,7 @@ ray_trainer = TorchTrainer(
 )
 result: ray.train.Result = ray_trainer.fit()
 
-# Load the trained model.
+# Load the trained model
 with result.checkpoint.as_directory() as checkpoint_dir:
     checkpoint_path = os.path.join(
         checkpoint_dir,

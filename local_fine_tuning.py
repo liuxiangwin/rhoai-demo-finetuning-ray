@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from datasets import load_dataset
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, TrainingArguments, Trainer, AutoTokenizer, AutoModelForCausalLM, AutoModelForQuestionAnswering
-from peft import LoraConfig, get_peft_model
-import math
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, TrainingArguments, Trainer
 
 model_checkpoint = 'distilbert/distilgpt2'
 model = GPT2LMHeadModel.from_pretrained(model_checkpoint)
