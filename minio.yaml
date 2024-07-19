@@ -1,0 +1,116 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    kubernetes.io/metadata.name: minio
+  name: minio
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: data-claim
+  namespace: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: minio-config-claim
+  namespace: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-console
+  namespace: minio
+spec:
+  type: ClusterIP
+  selector:
+    app: minio-server
+  ports:
+    - name: web
+      port: 80
+      targetPort: 9001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-api
+  namespace: minio
+spec:
+  type: ClusterIP
+  selector:
+    app: minio-server
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-server
+  namespace: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio-server
+  template:
+    metadata:
+      labels:
+        app: minio-server
+    spec:
+      containers:
+        - name: minio
+          env:
+            - name: MINIO_ROOT_USER
+              value: minio
+            - name: MINIO_ROOT_PASSWORD
+              value: minio123
+          image: minio/minio
+          args: ["server", "/data", "--console-address", ":9001"]
+          ports:
+            - containerPort: 9000
+              protocol: TCP
+              name: api
+            - containerPort: 9001
+              protocol: TCP
+              name: web
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /root/.minio
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data-claim
+        - name: config
+          persistentVolumeClaim:
+            claimName: minio-config-claim
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: minio-console
+  namespace: minio
+spec:
+  port:
+    targetPort: web
+  to:
+    kind: Service
+    name: minio-console
+    weight: 100
+  wildcardPolicy: None
