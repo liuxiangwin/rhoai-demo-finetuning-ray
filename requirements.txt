@@ -1,0 +1,6 @@
+datasets
+transformers
+peft
+torch
+s3fs
+pyarrow
